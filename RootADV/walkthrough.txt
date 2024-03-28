@@ -1,0 +1,51 @@
+So in order to interact easily with the emualted device, i needed some way to be root on the device. I found a way to do this:
+
+https://github.com/newbit1/rootAVD
+
+The project is called AVDroot and is available on github. It is a simple shell script that will give you root access to the emulator. It is very easy to use, just download the script and run it. It will give you a root shell on the emulator.
+
+I first needed to get and emulated device with API 27 (Android 8.1) running. 
+
+I then ran the script and got Magisk installed on the device.
+
+then using adb root, i was able to get a root shell on the device.
+
+adb install /path/to/app.apk
+
+
+
+Run the emualted mosbf
+https://mobsf.github.io/docs/#/dynamic_analyzer?id=android-studio-emulator
+
+Setup frida on the emulator
+https://omespino.com/tutorial-universal-android-ssl-pinning-in-10-minutes-with-frida/
+
+Installing certificate on the emulator
+https://www.youtube.com/watch?v=Jg4hyZfFTdc&t=639s
+
+    download burp certificate
+    openssl x509 -inform DER -in cacert.der -out cacert.pem
+    openssl x509 -inform PEM -subject_hash_old -in cacert.pem | head -1
+    mv cacert.pem <hash>.0
+    adb push <hash>.0 /sdcard/
+    adb root
+    adb remount
+    adb shell
+    mv <hash>.0 /system/etc/security/cacerts/
+
+SSL pinning so we can use app with proxy
+https://www.youtube.com/watch?v=S8Qt1dWfPjs
+
+Get the frida-server running on the emulator
+    adb push frida-server /data/local/tmp/
+    adb shell "chmod 755 /data/local/tmp/frida-server"
+    adb shell "/data/local/tmp/frida-server" &
+
+Run the app on the emulator with ssl pinning
+https://codeshare.frida.re/@sowdust/universal-android-ssl-pinning-bypass-2/
+    frida --codeshare sowdust/universal-android-ssl-pinning-bypass-2 -U -f com.askfm
+
+Frida Hook
+https://www.youtube.com/watch?v=RJXsvAjZl9U
+    java.perform()
+    https://frida.re/docs/javascript-api/
