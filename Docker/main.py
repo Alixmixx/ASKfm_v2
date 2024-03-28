@@ -1,11 +1,9 @@
 import generate_hash
-import requests
 import argparse
+import requests
 import hashlib
-from colorama import Fore, Style
 import random
 import string
-import hmac
 import json
 import time
 
@@ -42,9 +40,6 @@ def generate_random_md5():
 
 
 def init(username):
-    if username is None:
-        username = "miaooo@mailinator.com"
-
     headers = {
         "Authorization": "",
         "X-Client-Type": "android_4.91.1",
@@ -62,12 +57,10 @@ def init(username):
 
    # Open session
     open_ses = open_session(headers)
-    print(Fore.YELLOW + "Open Session Response:" + Style.RESET_ALL)
     print(json.dumps(open_ses, indent=4, sort_keys=True))
 
     # Register User
     register_user = post_user(username, headers)
-    print(Fore.CYAN + "Register User Response:" + Style.RESET_ALL)
     print(json.dumps(register_user, indent=4, sort_keys=True))
 
     # Get the token from last response
@@ -75,7 +68,6 @@ def init(username):
 
     # Get user
     user = get_user(username, headers)
-    print(Fore.MAGENTA + "Get User Response:" + Style.RESET_ALL)
     print(json.dumps(user, indent=4, sort_keys=True))
 
 
