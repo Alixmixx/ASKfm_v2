@@ -11,7 +11,7 @@ def send_email_request(email):
 
 def main():
     while True:
-        email = input("Enter email (or type 'exit' to quit): ")
+        email = input("Enter email : ")
         if email.lower() == 'exit':
             break
         try:
@@ -19,7 +19,7 @@ def main():
             format_response = json.dumps(response, indent=4, sort_keys=True)
             print("Response:\n", format_response)        
         except Exception as e:
-            print("An error occurred:", e)
+            print("Error:", e)
 
 if __name__ == "__main__":
     main()

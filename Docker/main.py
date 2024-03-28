@@ -1,12 +1,9 @@
 from flask import Flask, request, jsonify
-import os
 import generate_hash
-import argparse
 import requests
 import hashlib
 import random
 import string
-import json
 import time
 
 app = Flask(__name__)
@@ -29,6 +26,7 @@ def sendRequest(method, host, path, params, headers):
     hmac = generate_hash.generate_hmac(method, host, path, params)
     headers['Authorization'] = hmac
     #print('Full request:', method, host, path, params, headers, sep='\n')
+
     try:
         if method == "GET":
             res = requests.get("https://api.ask.fm:443" + path, headers=headers, params=params)
@@ -39,14 +37,12 @@ def sendRequest(method, host, path, params, headers):
 
         # Check if the response is not successful
         if res.status_code != 200:
-            # Handle non-successful responses, maybe logging or raising an exception
             print("Error: Received response with status code:", res.status_code)
             return {"error": f"Received response with status code: {res.status_code}", "details": res.json()}
 
         return res.json()
     
     except requests.RequestException as e:
-        # Handle any exceptions from the requests library
         print("RequestException:", str(e))
         return {"error": str(e)}
 
@@ -134,7 +130,6 @@ def post_user(usename, headers):
     url = "https://api.ask.fm:443/register"
 
     new_login = generate_random_md5()
-    #new_login = "miaoooo12ggf243"
 
     # Query parameters
     method = "POST"
