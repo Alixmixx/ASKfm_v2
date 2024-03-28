@@ -1,3 +1,5 @@
+from flask import Flask, request, jsonify
+import os
 import generate_hash
 import argparse
 import requests
@@ -7,27 +9,46 @@ import string
 import json
 import time
 
+app = Flask(__name__)
+
+@app.route('/run', methods=['POST'])
+def run_script():
+    data = request.json
+    if not data or 'email' not in data:
+        return jsonify({"error": "Email is required"}), 400
+    
+    email = data['email']
+    try:
+        result = init(email)
+        return jsonify({"result": result})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 def sendRequest(method, host, path, params, headers):
     hmac = generate_hash.generate_hmac(method, host, path, params)
     headers['Authorization'] = hmac
-    print('Full request:', method, host, path, params, headers, sep='\n')
-    if method == "GET":
-        res = requests.get("https://api.ask.fm:443" + path,
-                        headers=headers,
-                        params=params,
-)
-    elif method == "PUT":
-        res = requests.put("https://api.ask.fm:443" + path,
-                        headers=headers,
-                        data=params,
-)
-    elif method == "POST":
-        res = requests.post("https://api.ask.fm:443" + path,
-                        headers=headers,
-                        data=params,
-)
-    #params.rt += 1
-    return json.loads(res.text)
+    #print('Full request:', method, host, path, params, headers, sep='\n')
+    try:
+        if method == "GET":
+            res = requests.get("https://api.ask.fm:443" + path, headers=headers, params=params)
+        elif method == "PUT":
+            res = requests.put("https://api.ask.fm:443" + path, headers=headers, data=params)
+        elif method == "POST":
+            res = requests.post("https://api.ask.fm:443" + path, headers=headers, data=params)
+
+        # Check if the response is not successful
+        if res.status_code != 200:
+            # Handle non-successful responses, maybe logging or raising an exception
+            print("Error: Received response with status code:", res.status_code)
+            return {"error": f"Received response with status code: {res.status_code}", "details": res.json()}
+
+        return res.json()
+    
+    except requests.RequestException as e:
+        # Handle any exceptions from the requests library
+        print("RequestException:", str(e))
+        return {"error": str(e)}
 
 def generate_random_md5():
     # Generate a random string
@@ -39,7 +60,7 @@ def generate_random_md5():
     return random_str
 
 
-def init(username):
+def init(email):
     headers = {
         "Authorization": "",
         "X-Client-Type": "android_4.91.1",
@@ -55,20 +76,26 @@ def init(username):
     access_token = get_access_token(headers)
     headers["X-Access-Token"] = access_token
 
-   # Open session
+    # Open session
     open_ses = open_session(headers)
-    print(json.dumps(open_ses, indent=4, sort_keys=True))
+    if 'error' in open_ses:
+        return open_ses
 
     # Register User
-    register_user = post_user(username, headers)
-    print(json.dumps(register_user, indent=4, sort_keys=True))
+    register_user = post_user(email, headers)
+    if 'error' in register_user:
+        return register_user
 
     # Get the token from last response
     headers["X-Access-Token"] = register_user['at']
 
     # Get user
-    user = get_user(username, headers)
-    print(json.dumps(user, indent=4, sort_keys=True))
+    user = get_user(email, headers)
+    if 'error' in user:
+        return user
+
+    return {"user": user}
+
 
 
 def open_session(headers):
@@ -144,9 +171,4 @@ def get_access_token(headers):
     return response['accessToken']
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Run AskFM')
-    parser.add_argument('email', type=str, help='email to search for')
-
-    args = parser.parse_args()
-
-    init(args.email)
+    app.run(debug=True, host='0.0.0.0', port=5000)
