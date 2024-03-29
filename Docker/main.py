@@ -8,6 +8,7 @@ import time
 
 app = Flask(__name__)
 
+# When the client sends a POST request to the /run endpoint, the server will run the script with the provided email.
 @app.route('/run', methods=['POST'])
 def run_script():
     data = request.json
@@ -22,6 +23,7 @@ def run_script():
         return jsonify({"error": str(e)}), 500
 
 
+# Send a request to the Ask.fm API
 def sendRequest(method, host, path, params, headers):
     hmac = generate_hash.generate_hmac(method, host, path, params)
     headers['Authorization'] = hmac
@@ -51,6 +53,8 @@ def generate_random_md5():
     characters = string.ascii_letters + string.digits
     random_str = ''.join(random.choices(characters, k=20))
 
+    # Generate an MD5 hash of the random string
+    # But it seems hash is detected by the server so random string is used
     md5_hash = hashlib.md5(random_str.encode()).hexdigest()
 
     return random_str
@@ -72,12 +76,12 @@ def init(email):
     access_token = get_access_token(headers)
     headers["X-Access-Token"] = access_token
 
-    # Open session
+    # Open session with the server
     open_ses = open_session(headers)
     if 'error' in open_ses:
         return open_ses
 
-    # Register User
+    # Register User to the server, creating account
     register_user = post_user(email, headers)
     if 'error' in register_user:
         return register_user
@@ -85,7 +89,7 @@ def init(email):
     # Get the token from last response
     headers["X-Access-Token"] = register_user['at']
 
-    # Get user
+    # Make the email request
     user = get_user(email, headers)
     if 'error' in user:
         return user
@@ -93,7 +97,7 @@ def init(email):
     return {"user": user}
 
 
-
+# API functions
 def open_session(headers):
     url = "https://api.ask.fm:443/open"
     method = "PUT"
@@ -109,7 +113,6 @@ def open_session(headers):
 def get_user(username, headers):
     url = "https://api.ask.fm/search"
 
-    # Query parameters
     method = "GET"
     host = "api.ask.fm:443"
     path = "/search"
@@ -131,7 +134,6 @@ def post_user(usename, headers):
 
     new_login = generate_random_md5()
 
-    # Query parameters
     method = "POST"
     host = "api.ask.fm:443"
     path = "/register"
@@ -149,7 +151,6 @@ def get_access_token(headers):
 
     timestamp = str(int(time.time()))
    
-    # Query parameters
     method = "GET"
     host = "api.ask.fm:443"
     path = "/token"
@@ -160,7 +161,6 @@ def get_access_token(headers):
         'ts': timestamp
     }
 
-    # Sending GET request
     response = sendRequest(method, host, path, params, headers)
     print(response)
     return response['accessToken']
